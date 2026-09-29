@@ -1,19 +1,18 @@
 # Muse robotics: voice to motion, selfie to postcard
 
+|  |  |
+|---|---|
+| **Section** | [Use cases](https://dev.meta.ai/docs/cookbook#use-cases) |
+| **Time to complete** | ~45 min |
+| **Model** | `muse-spark-1.3`, `muse-image-1.0`, `muse-voice-transcribe-1.0`, `sam-3.1` |
+| **Harness** | Standalone Python with MuJoCo and a local kiosk |
+| **Prerequisites** | Python 3.12; no credentials or hardware for offline mode; optional Reachy Mini and CUPS printer |
+
 ![AI-generated demo hero showing Reachy Mini, Muse orchestration, and a Franka Panda arm](assets/muse_robotics_hero.png)
 
 > This is the hero artwork used by the working demo. It is an AI-generated illustration, not product photography: Reachy Mini is the visitor-facing camera, microphone, speaker, and expressive robot; a full-mesh simulated Franka Panda performs the manipulation task.
 
 A complete, visually faithful booth flow: Muse Voice transcribes the visitor, Muse Spark routes or plans, hosted SAM previews a simulated target, a full-mesh MuJoCo Panda executes deterministic skills, Reachy Mini handles camera/audio/reactions, Muse Image restyles an opt-in image, and the kiosk composes a file-first QR postcard. The code remains hardware-free by default; model-selected intents never directly control motors, retention, or printing.
-
-| | |
-|---|---|
-| **Models** | `muse-spark-1.3`, `muse-image-1.0`, `muse-voice-transcribe-1.0`, `sam-3.1` |
-| **API** | Meta Model API at `https://api.meta.ai/v1` |
-| **Python** | 3.12 recommended; 3.11 or newer required |
-| **Default mode** | Fully offline fixtures; no credentials or hardware |
-| **Optional hardware** | Reachy Mini, camera/microphone, and a CUPS photo printer |
-| **Safety boundary** | Models choose bounded intents; deterministic code owns actions and verification |
 
 ## See the real demo
 
