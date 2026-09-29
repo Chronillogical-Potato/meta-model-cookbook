@@ -21,7 +21,8 @@ End-to-end patterns: multimodal perception, orchestration, and full applications
 | [12](12_computer_use/) | Computer use | Drive a Linux desktop from screenshots — the agent finds an app, opens it, and plays it, clicking through a Cua sandbox. |
 | [13](13_macos_cua/) | macOS computer use | Drive a real Mac from screenshots with `metacua`, a native computer-use agent (Swift + Python) that clicks, types, and works out a GUI app on its own. |
 | [14](14_muse_robotics/) | Muse robotics | Orchestrate Muse Voice, Muse Spark, a full-mesh MuJoCo Panda, hosted SAM preview, Reachy Mini camera/audio/reactions, Muse Image, a kiosk, and file-first QR postcards. |
+| [15](15_glimmer_api_agent/) | Local agent that asks before calling Muse Spark | Run Muse Glimmer locally with Hermes and require approval before selected questions are sent to Muse Spark. |
 
 Recipes 01–05 and 07 map to live website tiles; 06 (iterative game dev), 08 (multi-agent
 product studio), 09 (one-shot game dev), 10 (perception grounding), 11 (GitHub repo agent),
-12 (computer use), 13 (macOS computer use), and 14 (Muse robotics) are in-repo recipes with no live tile.
+12 (computer use), 13 (macOS computer use), 14 (Muse robotics), and 15 (local agent with approval-gated cloud escalation) are in-repo recipes with no live tile.
