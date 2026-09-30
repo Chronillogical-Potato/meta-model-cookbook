@@ -1,0 +1,7 @@
+{
+  "skill": "pick_and_place_multi",
+  "args": {
+    "objects": ["red", "green", "blue"]
+  },
+  "narration": "I will clear the table by moving every block into the bin."
+}
