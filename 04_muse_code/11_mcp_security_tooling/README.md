@@ -1,6 +1,6 @@
 # Muse Code for Security Research
 
-*Wiring Burp Suite, Meta’s bug bounty research toolkit, headless Ghidra and LLDB into Meta’s terminal coding agent over MCP, then pointing it at a real vulnerable web server, a real bounty programme, and a real CVE buried in a stripped binary.*
+*Wiring Burp Suite, Meta’s bug bounty research toolkit, headless Ghidra and LLDB into Meta’s terminal coding agent over MCP, then pointing it at PortSwigger’s deliberately vulnerable demo site, a real bounty programme, and a real CVE buried in a stripped binary.*
 
 |  |  |
 |---|---|
@@ -15,9 +15,11 @@ Muse Code is Meta’s terminal coding agent; out of the box it reads code, edits
 
 An MCP server is a process that exposes a set of named, typed tools and nothing else. Wiring Burp in doesn’t hand the model a shell inside Burp; it hands it twenty-four specific functions such as `get_proxy_http_history` and `send_http1_request`.
 
-This write-up aims to illustrate how to wire a set of security tools into Muse Code as MCP servers, and then put each of them to work on a target that actually has bugs in it.
+Burp Suite is PortSwigger’s collection of tools for security testing web applications — an intercepting proxy, scanner, and repeater, among others. Here we use its proxy history and its MCP extension, in the free Community Edition.
 
-*   [Part one](#part-one---web-endpoints), Burp Suite. The agent reads proxy history, replays requests against PortSwigger’s deliberately vulnerable demo site, and builds its own proof of the lead it picks. This half is set up for you to run rather than read, and the target publishes an answer key so you can grade it yourself. Everything works on Burp Community.
+This write-up aims to illustrate how to wire a set of security tools into Muse Code as MCP servers, and then put each of them to work on a target that actually has bugs in it. All targets are authorized POC territory: the web half uses PortSwigger’s deliberately vulnerable demo site, the native half uses a public CVE with a published patch.
+
+*   [Part one](#part-one---web-endpoints), Burp Suite. The agent reads proxy history, replays requests against PortSwigger’s deliberately vulnerable demo site ([ginandjuice.shop](https://ginandjuice.shop), published for exactly this purpose), and builds its own proof of the lead it picks. This half is set up for you to run rather than read, and the target publishes an answer key so you can grade it yourself. Everything works on Burp Community.
 
 *   [Part two](#part-two---meta-bug-bounty-research), Meta’s own bug bounty toolkit. The same Burp session, plus Zurp: SPARTA leads to say where to look, Meta Context to say what an identifier names, and FBDL to build accounts you are allowed to attack — in Burp and over MCP, on one token. There is no answer key for this one, the access is gated, and this half needs Burp Professional.
 
@@ -29,7 +31,9 @@ Neither bug is novel, and that’s rather the point; what the agent does is corr
 
 ### Install
 
-There’s one shell installer for MacOS and Linux, and it drops a native binary on your path:
+Install Muse Code from [https://dev.meta.ai](https://dev.meta.ai) — the site provides platform-specific installers for Windows, macOS, and Linux, so you always get the current binary for your platform, even if the direct download path changes.
+
+On macOS and Linux the one-liner drops a native binary on your path:
 
 ```
 curl -fsSL https://dev.meta.ai/install.sh | sh
@@ -99,11 +103,15 @@ Two practical notes before you add a security tool to this block:
 *   Set `mode: "optional"` on every tool-backed server. Burp is a GUI app you start by hand and forget to start; on the default `required`, forgetting means Muse Code refuses to run at all in that project until you notice, whereas `optional` degrades to a warning.
 *   Servers load at startup, so edit `settings.json` and then start a new session; there’s no reload.
 
+Once a session is running, use the `/mcp` slash command to see which MCP servers loaded, which tools they expose, and whether any failed to start. That’s the fastest way to confirm a new server is wired correctly before handing the agent a task.
+
 ## Part One - Web Endpoints
 
 The agent gets a proxy it can read, a target it’s allowed to touch, and a bug it has to prove.
 
 ### Wiring Up Burp Suite
+
+Burp Suite is PortSwigger’s web application security testing toolkit — at minimum an intercepting proxy that records every HTTP request you make, which the agent can then read and replay.
 
 Everything in this section was run end to end on MacOS with Burp Suite Community 2026.8.0 and Muse Code 1.1.1.
 
@@ -118,6 +126,8 @@ brew install --cask burp-suite     # Community Edition, free
 The cask sets a quarantine attribute on the bundle, so launch the app once from Finder and clear the Gatekeeper prompt before doing anything on the command line. Skip this and every later step fails in confusing ways.
 
 Installing the Extension
+
+Burp can be extended by installing BApps — official or community extensions from the BApp Store that add new tools, tabs, and integrations.
 
 The MCP server is an official BApp and it installs in Community Edition; there’s no Professional requirement for the extension itself. Go to Extensions → BApp Store, search for MCP Server, and click Install.
 
@@ -201,7 +211,9 @@ Here’s the complete `settings.json`. Note that `command` points at the standal
 
 ### Verifying It End to End
 
-Start a session and ask the agent what it can see. There’s no `/mcp` slash command, so the check is a prompt:
+Start a session and run the `/mcp` slash command — it lists every configured MCP server, whether it loaded, and how many tools it exposes. You should see a single `burp` server with 24 tools at this point.
+
+You can also ask the agent what it can see, which confirms the tool list the model actually receives:
 
 Prompt
 
@@ -233,25 +245,26 @@ a+b%26c%3D%3Cd%3E
 
 Run this one interactively rather than through `muse exec`. Tool calls go through the approval layer, and a headless run has no UI to answer the prompt with, so it will sit there.
 
-Caution · policy enforcement and account blocks
+> [!CAUTION]
+> **Policy enforcement and account blocks**
+>
+> This is security research, so the prompts and tool calls here can trigger policy enforcement and temporarily block your Muse Code account.
 
-This is security research, so the prompts and tool calls here can trigger policy enforcement and temporarily block your Muse Code account.
+### What to do if your account is blocked
 
 If your account is blocked, you’ll receive a request ID in the session. To get unblocked:
 
 1. Go to [https://dev.meta.ai/support](https://dev.meta.ai/support)
-
 2. Submit a ticket using the “Policy, Privacy, and Safety” contact reason
-
 3. Include the term cybersecurity in the title
-
 4. Include the request ID you received in your session
 
 ### Pointing It at a Real Target
 
-Warning · authorized targets only
-
-The target here is [ginandjuice.shop](https://ginandjuice.shop), PortSwigger’s deliberately vulnerable demo site, published for exactly this purpose. Do not point any of this at a host you are not authorized to test.
+> [!WARNING]
+> **Authorized targets only**
+>
+> The target here is [ginandjuice.shop](https://ginandjuice.shop), PortSwigger’s deliberately vulnerable demo site, published for exactly this purpose. Do not point any of this at a host you are not authorized to test.
 
 Seeding the Proxy History
 
@@ -322,6 +335,41 @@ To allow this, the repository carries every tool in two forms:
 | FBDL            | where do I get accounts I am allowed to attack?                                                                              | Zurp -> FBDL tab, `{{fbdl.*}}` placeholders | `fbdl` server         |
 | CSRF / sprinkle | why won’t this captured request replay?                                                                                      | automatic on the request path               | n/a                   |
 | SPARTA          | (available only during specific engagement like live hacking events)   what are the interesting leads in the targeted scope? | Zurp -> SPARTA tab                          | `sparta` server       |
+
+### How these Tools Fit Together
+
+This is what the setup was for. They pair, in roughly a fixed order.
+
+Meta Context says what you are looking at. A bare `1000641…` in a response body could be a user, a group, a comment … Meta Context resolves things like object ids, ad accounts written `act_<digits>`, URLs, persisted GraphQL `doc_id`s to their object type, url or graphql friendly names.
+
+It is a map from identifiers to name and types in Meta context.
+
+It will show in Meta View tab that should appear now on all requests/responses from Meta products
+
+![The Meta View tab resolving Meta identifiers in a request to their object types and friendly names](assets/08_meta_view_resolve.webp)
+
+FBDL. FBDL is a tool designed to help you quickly and efficiently setup security bug reproduction steps using a standard “bug” description language. FBDL is a solution to the long standing challenge of reproducing the scenarios needed to demonstrate security issues. The content provided here is intended to help researchers better understand FBDL’s features, how it works, and how to use it to their advantage when submitting bugs.
+
+In Burp UI you find the tool in Zurp -> FBDL tab
+
+![The Zurp FBDL tab in Burp, listing the researcher's FBDL runs](assets/09_zurp_fbdl_tab.webp)
+
+CSRF substitution makes the request actually send. Burp-only, and the one piece with no agent equivalent, because it is a property of sitting on the request path. Zurp scrapes `fb_dtsg` and friends out of the responses you browse, keyed per host and per logged-in account, and substitutes `{{fb_dtsg}}`, `{{lsd}}` and `{{csrf}}` on the way out while keeping the parameters that depend on them consistent. Keying per account is what makes a two-actor test work: victim cookies in one tab and attacker cookies in another each get their own token instead of overwriting each other’s.
+
+The two halves of the toolkit meet at the placeholders. A run created by `create_fbdl_run` shows up in Burp’s FBDL tab like any other; `Pin FBDL run…` in the Repeater or Intruder context menu writes its id into the request, and `{{fbdl.<run id>.<label>}}` then resolves to that run’s values on send:
+
+```
+POST /api/graphql/ HTTP/2
+Host: www.facebook.com
+Content-Type: application/x-www-form-urlencoded
+
+fb_dtsg={{fb_dtsg}}&jazoest=0&doc_id=9876543210987654&variables=
+  {"pageID":"{{fbdl.1234567890123456.VictimPage}}",
+   "actorID":"{{fbdl.1234567890123456.OwnerA.uid}}"}
+```
+
+SPARTA says where to look. During specific engagements such as private bounty or live hacking events we organize. SPARTA tool will be available to provide assistance and guidance on specific targeted scope. This is done through leads. `sparta_scan_traffic` takes a capture, pulls the `doc_id` and `fb_api_req_friendly_name` out of it, and reports every SPARTA leads raised against them.
+
 
 ### Before Anything Else, Access
 
@@ -396,7 +444,7 @@ install the MCPs with the following settings and the same access token you got e
   "schema_version": 1,
   "mcpServers": {
     "meta-context": {
-      "type": "stdio",
+      "transport": "stdio",
       "command": "node",
       "args": [
         "/Users/<name>/.local/share/zurp/bug-bounty-research/dist/meta-context/index.js"
@@ -407,7 +455,7 @@ install the MCPs with the following settings and the same access token you got e
       "mode": "optional"
     },
     "sparta": {
-      "type": "stdio",
+      "transport": "stdio",
       "command": "node",
       "args": [
         "/Users/<name>/.local/share/zurp/bug-bounty-research/dist/sparta/index.js"
@@ -418,7 +466,7 @@ install the MCPs with the following settings and the same access token you got e
       "mode": "optional"
     },
     "fbdl": {
-      "type": "stdio",
+      "transport": "stdio",
       "command": "node",
       "args": [
         "/Users/<name>/.local/share/zurp/bug-bounty-research/dist/fbdl/index.js"
@@ -443,6 +491,8 @@ done
 
 Verifying It End to End
 
+Run `/mcp` in a new session — you should see `meta-context`, `sparta`, and `fbdl` alongside `burp`, all loaded optional. You can also ask the agent:
+
 ```
 List every MCP tool you have available, grouped by which server provides it. Do not call any of them.
 ```
@@ -451,49 +501,16 @@ The output should list the freshly installed MCPs like the following
 
 ![Muse Code listing the freshly installed Zurp MCP servers and their tools, grouped by server](assets/07_muse_code_zurp_mcp_list.webp)
 
-### How these Tools Fit Together
-
-This is what the setup was for. They pair, in roughly a fixed order.
-
-Meta Context says what you are looking at. A bare `1000641…` in a response body could be a user, a group, a comment … Meta Context resolves things like object ids, ad accounts written `act_<digits>`, URLs, persisted GraphQL `doc_id`s to their object type, url or graphql friendly names.
-
-It is a map from identifiers to name and types in Meta context.
-
-It will show in Meta View tab that should appear now on all requests/responses from Meta products
-
-![The Meta View tab resolving Meta identifiers in a request to their object types and friendly names](assets/08_meta_view_resolve.webp)
-
-FBDL. FBDL is a tool designed to help you quickly and efficiently setup security bug reproduction steps using a standard “bug” description language. FBDL is a solution to the long standing challenge of reproducing the scenarios needed to demonstrate security issues. The content provided here is intended to help researchers better understand FBDL’s features, how it works, and how to use it to their advantage when submitting bugs.
-
-In Burp UI you find the tool in Zurp -> FBDL tab
-
-![The Zurp FBDL tab in Burp, listing the researcher's FBDL runs](assets/09_zurp_fbdl_tab.webp)
-
-CSRF substitution makes the request actually send. Burp-only, and the one piece with no agent equivalent, because it is a property of sitting on the request path. Zurp scrapes `fb_dtsg` and friends out of the responses you browse, keyed per host and per logged-in account, and substitutes `{{fb_dtsg}}`, `{{lsd}}` and `{{csrf}}` on the way out while keeping the parameters that depend on them consistent. Keying per account is what makes a two-actor test work: victim cookies in one tab and attacker cookies in another each get their own token instead of overwriting each other’s.
-
-The two halves of the toolkit meet at the placeholders. A run created by `create_fbdl_run` shows up in Burp’s FBDL tab like any other; `Pin FBDL run…` in the Repeater or Intruder context menu writes its id into the request, and `{{fbdl.<run id>.<label>}}` then resolves to that run’s values on send:
-
-```
-POST /api/graphql/ HTTP/2
-Host: www.facebook.com
-Content-Type: application/x-www-form-urlencoded
-
-fb_dtsg={{fb_dtsg}}&jazoest=0&doc_id=9876543210987654&variables=
-  {"pageID":"{{fbdl.1234567890123456.VictimPage}}",
-   "actorID":"{{fbdl.1234567890123456.OwnerA.uid}}"}
-```
-
-SPARTA says where to look. During specific engagements such as private bounty or live hacking events we organize. SPARTA tool will be available to provide assistance and guidance on specific targeted scope. This is done through leads. `sparta_scan_traffic` takes a capture, pulls the `doc_id` and `fb_api_req_friendly_name` out of it, and reports every SPARTA leads raised against them.
-
 ### Pointing It at Meta
 
-Warning · the programme’s rules apply from here
-
-Everything up to now was a demo site, now you will be doing real research on Meta’s product.
-
-Work only against accounts you own (eg: created via FBDL), and make sure you have read and acknowledged the [Meta Bug Bounty scope and terms](https://bugbounty.meta.com/en-gb/terms/).
-
-Reporting a finding should be done at [bugbounty.meta.com/report/](https://bugbounty.meta.com/)
+> [!WARNING]
+> **The programme’s rules apply from here**
+>
+> Everything up to now was a demo site, now you will be doing real research on Meta’s product.
+>
+> Work only against accounts you own (eg: created via FBDL), and make sure you have read and acknowledged the [Meta Bug Bounty scope and terms](https://bugbounty.meta.com/en-gb/terms/).
+>
+> Reporting a finding should be done at [bugbounty.meta.com/report/](https://bugbounty.meta.com/)
 
 ### Workflow Example 1
 
@@ -751,7 +768,7 @@ This is the same check as the web half, and it’s worth repeating now that thre
 }
 ```
 
-Start a new session and run the same tool-listing prompt from [Verifying It End to End](#verify). You’re looking for three groups rather than one, with `mcp__ghidra.*` and `mcp__lldb.*` alongside `mcp__burp.*`. If Ghidra’s bridge died quietly this is where you find out, rather than twenty tool calls into an investigation.
+Start a new session and run `/mcp`, then the same tool-listing prompt from [Verifying It End to End](#part-one---web-endpoints). You’re looking for three groups rather than one, with `mcp__ghidra.*` and `mcp__lldb.*` alongside `mcp__burp.*`. If Ghidra’s bridge died quietly this is where you find out, rather than twenty tool calls into an investigation.
 
 ### Pointing It at the Binary
 
