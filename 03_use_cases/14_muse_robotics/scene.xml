@@ -1,0 +1,84 @@
+<!--
+  Copyright (c) Meta Platforms, Inc. and affiliates.
+  All rights reserved.
+
+  This source code is licensed under the license found in the
+  LICENSE file in the root directory of this source tree.
+-->
+
+<mujoco model="muse-spark pick-place demo">
+  <!-- Include the Franka Panda arm (self-contained copy in demo/assets). -->
+  <include file="panda.xml"/>
+
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" integrator="implicitfast"/>
+
+  <visual>
+    <headlight diffuse="0.7 0.7 0.72" ambient="0.4 0.4 0.42" specular="0.2 0.2 0.2"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="140" elevation="-22" offwidth="1280" offheight="720"/>
+    <quality shadowsize="8192" offsamples="8"/>
+    <map fogstart="3" fogend="12" shadowclip="2.5" shadowscale="1.2"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.32 0.5 0.72" rgb2="0.03 0.05 0.09" width="512" height="3072"/>
+    <texture type="2d" name="groundplane" builtin="checker" mark="edge" rgb1="0.20 0.30 0.42" rgb2="0.10 0.17 0.27"
+      markrgb="0.55 0.62 0.72" width="512" height="512"/>
+    <material name="groundplane" texture="groundplane" texuniform="true" texrepeat="6 6" reflectance="0.25" shininess="0.3" specular="0.4"/>
+    <material name="table_mat" rgba="0.86 0.75 0.58 1" reflectance="0.08" shininess="0.2" specular="0.3"/>
+    <material name="bin_mat" rgba="0.22 0.25 0.30 1" reflectance="0.25" shininess="0.6" specular="0.6"/>
+    <material name="red_mat"   rgba="0.88 0.14 0.14 1" shininess="0.7" specular="0.7" reflectance="0.12"/>
+    <material name="green_mat" rgba="0.13 0.72 0.22 1" shininess="0.7" specular="0.7" reflectance="0.12"/>
+    <material name="blue_mat"  rgba="0.13 0.36 0.90 1" shininess="0.7" specular="0.7" reflectance="0.12"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0.5 0 2.2" dir="0 0 -1" directional="true" diffuse="0.55 0.55 0.58" specular="0.3 0.3 0.3"/>
+    <light pos="0.9 0.7 1.7" dir="-0.4 -0.3 -1" diffuse="0.45 0.45 0.48" specular="0.25 0.25 0.25"/>
+    <light pos="0.1 -0.7 1.5" dir="0.3 0.4 -1" diffuse="0.28 0.30 0.36"/>
+    <geom name="floor" pos="0 0 -0.4" size="0 0 0.05" type="plane" material="groundplane"/>
+
+    <!-- Table surface at z=0 (top). Arm base sits at origin on the table. -->
+    <body name="table" pos="0.45 0 -0.2">
+      <geom name="table_top" type="box" size="0.45 0.5 0.2" material="table_mat"/>
+    </body>
+
+    <!-- Target bin (open-top box made of 4 walls + floor) at right side of table. -->
+    <body name="bin" pos="0.55 -0.28 0.0">
+      <geom name="bin_floor" type="box" pos="0 0 0.005" size="0.15 0.11 0.005" material="bin_mat"/>
+      <geom name="bin_wx1" type="box" pos="0.145 0 0.03" size="0.005 0.11 0.03" material="bin_mat"/>
+      <geom name="bin_wx2" type="box" pos="-0.145 0 0.03" size="0.005 0.11 0.03" material="bin_mat"/>
+      <geom name="bin_wy1" type="box" pos="0 0.105 0.03" size="0.15 0.005 0.03" material="bin_mat"/>
+      <geom name="bin_wy2" type="box" pos="0 -0.105 0.03" size="0.15 0.005 0.03" material="bin_mat"/>
+    </body>
+
+    <!-- Manipulable blocks (free joints). Positions on the table in front of the arm. -->
+    <body name="red_block" pos="0.45 0.12 0.025">
+      <freejoint name="red_free"/>
+      <geom name="red_block_geom" type="box" size="0.025 0.025 0.05" material="red_mat"
+            mass="0.05" friction="1.0 0.02 0.001"/>
+    </body>
+    <body name="green_block" pos="0.5 0.0 0.025">
+      <freejoint name="green_free"/>
+      <geom name="green_block_geom" type="box" size="0.025 0.025 0.05" material="green_mat"
+            mass="0.05" friction="1.0 0.02 0.001"/>
+    </body>
+    <body name="blue_block" pos="0.42 -0.05 0.025">
+      <freejoint name="blue_free"/>
+      <geom name="blue_block_geom" type="box" size="0.025 0.025 0.05" material="blue_mat"
+            mass="0.05" friction="1.0 0.02 0.001"/>
+    </body>
+
+    <!-- Hero camera for recording -->
+    <camera name="hero" pos="1.5 -1.1 1.1" xyaxes="0.7 0.7 0 -0.3 0.3 0.9"/>
+    <camera name="front" pos="1.6 0 0.7" xyaxes="0 1 0 -0.4 0 0.9"/>
+    <camera name="top" pos="0.45 0 1.4" xyaxes="1 0 0 0 1 0"/>
+    <!-- Model-view camera: the angled overhead that gets sent to Muse-Spark 1.2. Frames the
+         table, all blocks, and the bin so the model can reason about the scene. -->
+    <camera name="model_view" pos="1.15 0 1.05" xyaxes="0 1 0 -0.65 0 0.76"/>
+    <!-- Kiosk overhead inset: oriented so its left/right/toward-camera sense MATCHES the hero
+         (avoids the mirrored feel of model_view). image-right ~ world[+x,+y] like hero. -->
+    <camera name="kiosk_over" pos="1.0 0 1.35" xyaxes="0.71 0.71 0 -0.675 0.675 0.30"/>
+  </worldbody>
+</mujoco>

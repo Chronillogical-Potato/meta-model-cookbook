@@ -1,0 +1,7 @@
+{
+  "skill": "sort_by_color",
+  "args": {
+    "objects": ["red", "green", "blue"]
+  },
+  "narration": "I will arrange the blocks into a neat color-sorted row."
+}
