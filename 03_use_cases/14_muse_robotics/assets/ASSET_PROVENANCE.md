@@ -1,3 +1,11 @@
+<!--
+  Copyright (c) Meta Platforms, Inc. and affiliates.
+  All rights reserved.
+
+  This source code is licensed under the license found in the
+  LICENSE file in the root directory of this source tree.
+-->
+
 # Asset provenance
 
 All raster media in this directory is people-free. No visitor photograph, voice recording, transcript, private endpoint, credential, or event footage is included.

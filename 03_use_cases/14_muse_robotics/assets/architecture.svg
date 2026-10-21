@@ -1,3 +1,11 @@
+<!--
+  Copyright (c) Meta Platforms, Inc. and affiliates.
+  All rights reserved.
+
+  This source code is licensed under the license found in the
+  LICENSE file in the root directory of this source tree.
+-->
+
 <svg xmlns="http://www.w3.org/2000/svg" width="1400" height="420" viewBox="0 0 1400 420" role="img" aria-labelledby="title desc">
   <title id="title">Muse robotics planning and execution flow</title>
   <desc id="desc">A visitor request flows to Muse Spark, through strict plan validation, into deterministic robot skills, then a MuJoCo Panda simulation.</desc>
