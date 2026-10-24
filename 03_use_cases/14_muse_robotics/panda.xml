@@ -1,3 +1,11 @@
+<!--
+  Copyright (c) Meta Platforms, Inc. and affiliates.
+  All rights reserved.
+
+  This source code is licensed under the license found in the
+  LICENSE file in the root directory of this source tree.
+-->
+
 <mujoco model="panda">
   <!--
     Based on the Apache-2.0 MuJoCo Menagerie Panda model. This cookbook copy
